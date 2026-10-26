@@ -1,0 +1,42 @@
+{
+  "checkpoint": [
+    "3090=models/sensitivity/constrained_seed3090.pt",
+    "4090=models/sensitivity/constrained_seed4090.pt"
+  ],
+  "episodes": 5,
+  "seed": 93000,
+  "max_steps": 120,
+  "memory_budget": 8.0,
+  "memory_coefficient": 1.0,
+  "constraint_aware": true,
+  "n_tabs": 12,
+  "results_dir": "results/reproducibility_check",
+  "checkpoints": [
+    [
+      "DQN_seed3090",
+      "models/sensitivity/constrained_seed3090.pt"
+    ],
+    [
+      "DQN_seed4090",
+      "models/sensitivity/constrained_seed4090.pt"
+    ]
+  ],
+  "evaluation_seeds": [
+    93000,
+    93004
+  ],
+  "environment_coefficients": {
+    "memory": 1.0,
+    "restore": 0.8,
+    "lost": 1.2,
+    "disruption": 0.45,
+    "action": 0.035,
+    "invalid": 0.12,
+    "deferred": 0.25
+  },
+  "constraint_event_rule": "blocked/deferred arrivals; suspended and closed returns remain pending when restore does not fit; initial overflow tabs start suspended",
+  "baseline_candidate_set": "active-tab SUSPEND actions; WAIT if empty",
+  "useful_revisit_success": "useful task-matching revisit events / all revisit events",
+  "invalid_action_rate": "invalid decisions / environment steps",
+  "ci_method": "normal-approximation 95% CI over episodes; paired differences by common seed"
+}

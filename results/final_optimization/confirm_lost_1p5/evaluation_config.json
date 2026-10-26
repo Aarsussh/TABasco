@@ -1,0 +1,32 @@
+{
+  "name": "lost_1p5_confirmatory",
+  "episodes": 40,
+  "evaluation_seeds": [
+    92000,
+    92039
+  ],
+  "coefficients": {
+    "memory": 1.0,
+    "restore": 0.8,
+    "lost": 1.5,
+    "disruption": 0.45,
+    "action": 0.035,
+    "invalid": 0.12,
+    "deferred": 0.25
+  },
+  "constraint_aware": true,
+  "checkpoints": [
+    "3090=results/final_optimization/checkpoints/lost_1p5_seed3090.pt",
+    "4090=results/final_optimization/checkpoints/lost_1p5_seed4090.pt"
+  ],
+  "canonical_reward": {
+    "memory": 1.0,
+    "restore": 0.8,
+    "lost": 1.2,
+    "disruption": 0.45,
+    "action": 0.035,
+    "deferred": 0.25
+  },
+  "selection_use": "validation only",
+  "cross_candidate_primary_metric": "canonical_return on exact candidate trajectories"
+}

@@ -1,0 +1,6 @@
+policy,episodes,action_crossing_steps_mean,suspended_revisit_crossing_steps_mean,closed_recovery_crossing_steps_mean,arrival_crossing_steps_mean,violation_steps_initial_state_mean,violation_steps_agent_action_source_mean,violation_steps_suspended_revisit_source_mean,violation_steps_closed_recovery_source_mean,violation_steps_new_arrival_source_mean
+DQN_seed3090,40,0.5,1.8,1.1,2.1,0.35,2.4,2.75,2.175,5.95
+DQN_seed4090,40,0.35,0.525,1.25,2.275,0.375,1.05,1.325,3.05,7.4
+LFU,40,0.0,0.0,0.0,0.0,0.275,0.0,0.0,0.0,0.0
+LRU,40,0.0,0.0,0.0,0.0,0.275,0.0,0.0,0.0,0.0
+Random,40,0.0,0.025,0.0,0.0,0.3,0.0,0.025,0.0,0.0

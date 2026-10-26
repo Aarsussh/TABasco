@@ -1,0 +1,43 @@
+{
+  "checkpoint": [
+    "3090=models/sensitivity/constrained_seed3090.pt",
+    "4090=models/sensitivity/constrained_seed4090.pt"
+  ],
+  "episodes": 40,
+  "seed": 70000,
+  "max_steps": 120,
+  "memory_budget": 8.0,
+  "memory_coefficient": 1.0,
+  "constraint_aware": true,
+  "n_tabs": 12,
+  "results_dir": "results/sensitivity/validation_constraint",
+  "checkpoints": [
+    [
+      "DQN_seed3090",
+      "models/sensitivity/constrained_seed3090.pt"
+    ],
+    [
+      "DQN_seed4090",
+      "models/sensitivity/constrained_seed4090.pt"
+    ]
+  ],
+  "evaluation_seeds": [
+    70000,
+    70039
+  ],
+  "environment_coefficients": {
+    "memory": 1.0,
+    "restore": 0.8,
+    "lost": 1.2,
+    "disruption": 0.45,
+    "action": 0.035,
+    "invalid": 0.12,
+    "deferred": 0.25
+  },
+  "constraint_event_rule": "new arrivals that do not fit are declined, not queued; suspended returns stay suspended; closed recovery remains in history; initial overflow tabs start suspended; infeasible KEEP restore is masked",
+  "baseline_candidate_set": "active-tab SUSPEND actions; WAIT if empty",
+  "useful_revisit_success": "useful task-matching revisit events / all revisit events",
+  "invalid_action_rate": "invalid decisions / environment steps",
+  "ci_method": "normal-approximation 95% CI over episodes; paired differences by common seed",
+  "replay_next_action_mask": "environment-derived next action mask stored per transition and used in DQN target maximization"
+}

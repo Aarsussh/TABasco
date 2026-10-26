@@ -1,0 +1,45 @@
+{
+  "episodes": 250,
+  "max_steps": 120,
+  "seed": 4090,
+  "memory_budget": 8.0,
+  "memory_coefficient": 3.0,
+  "n_tabs": 12,
+  "checkpoint": "models/sensitivity/memory3_seed4090.pt",
+  "results_dir": "results/sensitivity/train_m3_seed4090",
+  "learning_rate": 0.001,
+  "batch_size": 64,
+  "gamma": 0.97,
+  "replay_capacity": 50000,
+  "target_update": 500,
+  "epsilon_start": 1.0,
+  "epsilon_end": 0.05,
+  "epsilon_decay": 20000,
+  "gradient_clip": 10.0,
+  "algorithm": "DQN",
+  "device": "cpu",
+  "observation_shape": [
+    101
+  ],
+  "action_count": 37,
+  "network_hidden_units": [
+    128,
+    128
+  ],
+  "activation": "ReLU",
+  "optimizer": "Adam",
+  "loss": "Huber/smooth_l1",
+  "action_mask": "occupied tab; SUSPEND only active; WAIT always",
+  "environment_coefficients": {
+    "memory": 3.0,
+    "restore": 0.8,
+    "lost": 1.2,
+    "disruption": 0.45,
+    "action": 0.035,
+    "invalid": 0.12
+  },
+  "training_episode_seeds": [
+    4091,
+    4340
+  ]
+}

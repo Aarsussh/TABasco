@@ -1,0 +1,48 @@
+{
+  "episodes": 250,
+  "max_steps": 120,
+  "seed": 4090,
+  "memory_budget": 8.0,
+  "memory_coefficient": 1.0,
+  "constraint_aware": true,
+  "n_tabs": 12,
+  "checkpoint": "models/sensitivity/constrained_seed4090.pt",
+  "results_dir": "results/sensitivity/train_constraint_seed4090",
+  "learning_rate": 0.001,
+  "batch_size": 64,
+  "gamma": 0.97,
+  "replay_capacity": 50000,
+  "target_update": 500,
+  "epsilon_start": 1.0,
+  "epsilon_end": 0.05,
+  "epsilon_decay": 20000,
+  "gradient_clip": 10.0,
+  "algorithm": "DQN",
+  "device": "cpu",
+  "observation_shape": [
+    101
+  ],
+  "action_count": 37,
+  "network_hidden_units": [
+    128,
+    128
+  ],
+  "activation": "ReLU",
+  "optimizer": "Adam",
+  "loss": "Huber/smooth_l1",
+  "action_mask": "occupied tab; SUSPEND only active; WAIT always; suspended KEEP only if restoration fits budget",
+  "environment_coefficients": {
+    "memory": 1.0,
+    "restore": 0.8,
+    "lost": 1.2,
+    "disruption": 0.45,
+    "action": 0.035,
+    "invalid": 0.12,
+    "deferred": 0.25
+  },
+  "training_episode_seeds": [
+    4091,
+    4340
+  ],
+  "replay_next_action_mask": "environment-derived next action mask stored per transition and used in DQN target maximization"
+}

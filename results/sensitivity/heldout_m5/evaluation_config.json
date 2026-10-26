@@ -1,0 +1,42 @@
+{
+  "checkpoint": [
+    "3090=models/sensitivity/memory5_seed3090.pt",
+    "4090=models/sensitivity/memory5_seed4090.pt"
+  ],
+  "episodes": 60,
+  "seed": 91000,
+  "max_steps": 120,
+  "memory_budget": 8.0,
+  "memory_coefficient": 5.0,
+  "constraint_aware": false,
+  "n_tabs": 12,
+  "results_dir": "results/sensitivity/heldout_m5",
+  "checkpoints": [
+    [
+      "DQN_seed3090",
+      "models/sensitivity/memory5_seed3090.pt"
+    ],
+    [
+      "DQN_seed4090",
+      "models/sensitivity/memory5_seed4090.pt"
+    ]
+  ],
+  "evaluation_seeds": [
+    91000,
+    91059
+  ],
+  "environment_coefficients": {
+    "memory": 5.0,
+    "restore": 0.8,
+    "lost": 1.2,
+    "disruption": 0.45,
+    "action": 0.035,
+    "invalid": 0.12,
+    "deferred": 0.25
+  },
+  "constraint_event_rule": "soft memory budget; automatic events may exceed it",
+  "baseline_candidate_set": "active-tab SUSPEND actions; WAIT if empty",
+  "useful_revisit_success": "useful task-matching revisit events / all revisit events",
+  "invalid_action_rate": "invalid decisions / environment steps",
+  "ci_method": "normal-approximation 95% CI over episodes; paired differences by common seed"
+}
