@@ -4,7 +4,7 @@
 
 Retain the existing constraint-aware DQN checkpoints. The `disrupt_0p35` candidate had a small positive paired validation-return difference against the matching control models (+0.48 points averaged across two training seeds), but its 95% paired interval included zero ([-1.03, +1.99]), and useful-revisit success fell from 0.820/0.834 for control to 0.797/0.802. Training-seed effects were inconsistent: the candidate gained +2.43 points against control seed 3090 and lost 1.47 against control seed 4090. That is not adequate evidence to replace the current selection.
 
-The candidate checkpoints and logs are retained here for reproducibility. The existing submission checkpoints and report were not modified.
+The candidate checkpoints and logs are retained here for reproducibility. The selected checkpoints and previous experiment artifacts were not modified.
 
 ## Starting point and protocol
 
@@ -66,4 +66,4 @@ The remaining runs are fully specified in the per-run `training_config.json` and
 
 ## Limitations
 
-There are two training seeds for the shortlisted configurations and one seed for the other two candidates. The common validation set has 40 simulated sessions; per-episode confidence intervals do not capture broad environment or training-seed variation. The baseline policies intentionally suspend aggressively and have higher task disruption, while achieving a better revisit success rate. The simulation's workload and memory units are synthetic. The prior held-out data were already examined, so claims about generalization must remain qualified. No model or report was replaced, and no Git push was performed.
+There are two training seeds for the shortlisted configurations and one seed for the other two candidates. The common validation set has 40 simulated sessions; per-episode confidence intervals do not capture broad environment or training-seed variation. The baseline policies intentionally suspend aggressively and have higher task disruption, while achieving a better revisit success rate. The simulation's workload and memory units are synthetic. The prior held-out data were already examined, so claims about generalization must remain qualified. No model or earlier experiment output was replaced, and no Git push was performed.

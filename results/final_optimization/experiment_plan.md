@@ -1,7 +1,7 @@
 # Final optimization pass: pre-run protocol and hypotheses
 
 ## Immutable control
-Use the existing constraint-aware DQN checkpoints, trained for 250 episodes with seeds 3090 and 4090, as the current control. Preserve them and all prior reports/results. Environment: N=12, B=8, horizon=120, constraint_aware=True; coefficients memory=1.0, restore=.8, lost=1.2, disruption=.45, action=.035, invalid=.12, deferred=.25. DQN architecture/training settings stay at the established 101-128-128-37 MLP, Adam .001, gamma .97, batch 64, replay 50,000, target sync 500 learner updates, epsilon 1 to .05 over 20,000 decisions, 250 episodes, CPU.
+Use the existing constraint-aware DQN checkpoints, trained for 250 episodes with seeds 3090 and 4090, as the current control. Preserve them and all prior experiment artifacts. Environment: N=12, B=8, horizon=120, constraint_aware=True; coefficients memory=1.0, restore=.8, lost=1.2, disruption=.45, action=.035, invalid=.12, deferred=.25. DQN architecture/training settings stay at the established 101-128-128-37 MLP, Adam .001, gamma .97, batch 64, replay 50,000, target sync 500 learner updates, epsilon 1 to .05 over 20,000 decisions, 250 episodes, CPU.
 
 ## Validation protocol
 Use common, fresh validation environment seeds 92000–92039 for all policies and candidates. The prior test block 91000–91059 has already been inspected in the previous experiment and is not pristine; it will only be used once at the end for the selected candidate and established control/baselines, with that limitation stated. No test results may influence candidate choice.

@@ -1,152 +1,143 @@
-# TABasco
+# TABasco — Task-Aware Browser Tab Optimization with Reinforcement Learning
 
-**Task-Aware Browser Tab Optimization using Reinforcement Learning** is an original Python/PyTorch project that models tab management as a finite-horizon MDP. V1 uses a simulated browser session; it is not a browser extension and does not interact with a real browser.
+![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
+![PyTorch 2+](https://img.shields.io/badge/PyTorch-2%2B-EE4C2C?logo=pytorch&logoColor=white)
+![Reinforcement Learning](https://img.shields.io/badge/AI-Reinforcement%20Learning-6A5ACD)
 
-**Author:** Aarussh Shrivastava (B24CM1001), IIT Jodhpur<br>
-**Course:** CSL3090 Artificial Intelligence, Assignment 2<br>
-**Repository:** [github.com/Aarsussh/TABasco](https://github.com/Aarsussh/TABasco)
+Browser sessions grow quickly: some tabs are useful now, some will matter later, and active pages compete for limited memory. **TABasco** explores this trade-off with a reproducible simulated browser session and a reward-trained Deep Q-Network (DQN). It compares the learned policy with simple LRU, LFU, and random suspension policies.
 
-## Start here
+> TABasco is a research and coursework simulator. It does not control a real browser.
 
-Use Python 3.10 or newer. The direct Python dependencies are NumPy, Matplotlib, PyTorch, pytest, and ReportLab (for the PDF builder). The report is delivered as a two-column PDF with a companion LaTeX source. `report/build_report.py` regenerates the PDF from the saved evaluation tables and plots using ReportLab.
+## How it works
 
-Windows PowerShell, from the repository root:
+The environment models a browsing session as a finite-horizon Markov decision process. Tabs arrive, tasks change, pages are revisited, and suspended or closed pages may need restoration or recovery. At each step, the policy chooses one tab action or waits; the environment then advances the session and returns a reward and a cost breakdown.
+
+```mermaid
+flowchart LR
+    S[Tab and task state] --> P[Masked DQN policy]
+    P --> A[Keep, suspend, close, or wait]
+    A --> E[Arrivals, task switches, revisits, expiry]
+    E --> R[Reward and event metrics]
+    R --> S
+```
+
+### Highlights
+
+- Fixed-size, seeded tab-management environment with active and suspended pages.
+- Compact PyTorch DQN with replay, target network, epsilon-greedy exploration, and validity masks.
+- Independent LRU, LFU, and random valid-action baselines.
+- Optional constraint-aware transitions for enforcing the simulator’s active-memory budget.
+- Common-seed evaluation, per-episode CSVs, confidence intervals, and result plots.
+- Saved checkpoints and experiment metadata for inspection and repeatable runs.
+
+## Results
+
+The selected constraint-aware evaluation used the same 60 scenario seeds (91000–91059) for every policy. This evaluation block had already been examined during project development, so it is **not an untouched test set**. Entries show mean return ± scenario standard deviation; higher return is better under the configured reward.
+
+| Policy | Return | Useful revisit success | Violation steps / episode |
+|---|---:|---:|---:|
+| DQN, training seed 3090 | **−21.70 ± 4.51** | 0.824 | 0 |
+| DQN, training seed 4090 | **−16.31 ± 3.52** | 0.849 | 0 |
+| LRU | −58.38 ± 4.67 | **0.886** | 0 |
+| LFU | −58.43 ± 4.67 | **0.886** | 0 |
+| Random | −58.55 ± 4.62 | **0.887** | 0 |
+
+The DQN policies received better composite returns in this evaluation, while the suspension baselines had higher useful-revisit success. The zero-violation result comes from the constraint-aware environment’s transition rules; it is not a memory guarantee learned by DQN. These measurements describe this simulator and reward design, not real-world browser performance.
+
+**Return comparison** — episodic reward across the common evaluation scenarios, with uncertainty shown in the plot.
+
+![Mean return comparison with confidence intervals](results/sensitivity/plots/heldout/return_comparison.png)
+
+**Active memory** — mean active memory use relative to the configured budget.
+
+![Mean active memory comparison](results/sensitivity/plots/heldout/memory_comparison.png)
+
+**Budget violations** — memory-violation comparison under the selected constraint-aware rules.
+
+![Memory violation comparison](results/sensitivity/plots/heldout/violation_comparison.png)
+
+The raw evaluation episodes, aggregate statistics, paired return differences, and run configuration are in [`results/sensitivity/heldout_constraint/`](results/sensitivity/heldout_constraint/). Earlier soft-budget runs, penalty sensitivity experiments, and later reward-weight validation remain available under `results/` for context.
+
+## Environment and learning setup
+
+### Observation and actions
+
+For `N = 12` slots, the observation is a fixed 101-value vector (`8N + 5`). Each slot contributes occupancy, active/suspended status, normalized memory size, recency, access frequency, current-task match, estimated revisit probability, and unsaved-work risk. Five global features represent memory relative to budget, task context, horizon progress, and occupancy.
+
+The discrete action space has 37 actions: `3 × 12` tab-specific KEEP, SUSPEND, or CLOSE actions, plus WAIT. KEEP leaves an active tab open or restores a suspended tab. SUSPEND frees that tab’s active memory while retaining its metadata. CLOSE removes the tab while leaving a finite recovery record. Empty-slot operations and redundant suspension are invalid; WAIT is always valid. One action advances one environment step.
+
+### Reward and memory constraint
+
+The reward is the negative sum of recorded costs:
+
+`r = −[c_mem max(0, M − B) + restoration + 1.2 lost_work + 0.45 disruption + action + deferred_event]`
+
+Here `M` is active memory and `B` is the budget (default 8 synthetic units). Suspended tabs use zero active-memory units. The ordinary soft-budget environment can exceed the budget and records the excess. The selected checkpoints were trained and evaluated with `--constraint-aware`: initial overflow tabs start suspended, infeasible restores and recoveries are deferred, and arrivals that do not fit are declined. That environment enforces its active-memory invariant across automatic events as well as agent actions. It is a simulator rule, not a property of the learned policy or of a production browser.
+
+## Setup
+
+Python 3.10 or newer is recommended. Dependencies are NumPy, Matplotlib, PyTorch, and pytest.
 
 ```powershell
+# Windows PowerShell, from the repository root
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
-python -m pytest -q
+```
+
+On macOS or Linux, activate the environment with `source .venv/bin/activate` instead.
+
+## Run it
+
+Run a readable episode with a saved checkpoint:
+
+```bash
 python demo.py --seed 3090 --model-seed 4090
 ```
 
-If PowerShell blocks activation, run `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass` in that terminal and activate again. On macOS/Linux, replace activation with `source .venv/bin/activate`. In the original workspace, the parent virtual environment can also run commands as `..\.venv\Scripts\python.exe ...` from this project directory.
+Run the test suite:
 
-The demo loads a saved constrained DQN and prints one deterministic 40-step episode by default: each policy action, memory after the step, automatic arrival/revisit events, and a cost/reward-accounting summary. Choose the other saved model with `--model-seed 3090`; use `--checkpoint PATH` to point at another compatible checkpoint. Pass `--steps 120` to match the training horizon.
-
-## MDP
-
-```mermaid
-flowchart LR
-  S[Fixed 101-value observation] --> P[Masked DQN policy]
-  P --> A[One tab action or WAIT]
-  A --> T[Environment action transition]
-  T --> E[Task switch, revisit, recovery, arrival, expiry]
-  E --> R[Reward cost breakdown]
-  R --> S
+```bash
+python -m pytest -q
 ```
 
-With `N=12` slots, the float32 observation is `8N+5 = 101` values. Each slot has: occupied, active, normalized memory size, normalized recency, normalized access frequency, current-task match, estimated revisit probability, and unsaved-work risk. The five global fields encode active memory/budget, task context, remaining horizon, elapsed fraction, and occupied-slot fraction. Tab memory sizes are sampled from 0.45 to 1.35 synthetic units. The session changes tasks, adds tabs, revisits active or suspended pages, may recover closed pages, and expires old tabs. Revisit probability is updated from session age, prior frequency, and task affinity.
-
-The discrete action is `3 * slot + operation`: KEEP, SUSPEND, or CLOSE for one slot; the final action is WAIT. KEEP retains an active tab at no-op cost or restores a suspended tab. SUSPEND frees all active memory for that tab but retains its metadata. CLOSE removes it and leaves a finite recovery record. Empty-slot actions and redundant SUSPEND are invalid; WAIT is always valid. A single decision advances one time step. Episodes use a fixed 120-step horizon (truncated at the limit), so closing every tab cannot end the episode early.
-
-The standard soft-budget environment counts active tabs against budget `B=8`; suspended tabs consume zero active-memory units. Its reward is the negative sum of costs:
-
-`r = -[c_mem max(0, M-B) + restoration + 1.2 lost_work + 0.45 disruption + action + deferred_event]`.
-
-Defaults include `c_mem=1`, restoration multiplier 0.8, valid action/WAIT cost 0.035, invalid action cost 0.12, and deferred-event cost 0.25. The environment reports the breakdown each step; components sum to the reward. No independent tab-count bonus is used.
-
-### Constraint-aware environment
-
-The selected final models use `--constraint-aware`. This variant enforces active memory as a transition invariant: initial overflow tabs start suspended; restoration actions that do not fit are masked; a suspended revisit that cannot fit stays suspended; closed recovery that cannot fit remains in history; and a new arrival that cannot fit is declined, not queued. Deferred automatic events cost 0.25. The invariant is checked after each transition, including automatic events. This guarantees the stated synthetic active-memory constraint only; it says nothing about real browser process memory.
-
-## Agent and baselines
-
-The learning policy is a compact 101-128-128-37 DQN. It uses ReLU, Adam, epsilon-greedy exploration, uniform experience replay, a target network, Huber TD loss, and gradient clipping. The observation-derived validity mask is applied in exploration, greedy selection, and target-value maximization. The stored next-state mask is used for replay. The agent is trained from environment rewards and transitions. LRU, LFU, and Random are independent evaluation baselines, not sources of DQN labels. Each suspends from the same active eligible-tab set; LRU selects oldest last visit, LFU selects lowest frequency then oldest, and Random samples uniformly. All WAIT when no tab is eligible.
-
-## Quick baseline comparison (no training)
-
-Load the two selected constraint-aware checkpoints and compare them with LRU, LFU, and Random on five reproducible scenarios. This short smoke run writes per-episode CSVs, a summary CSV, paired comparisons, and plots. It is separate from the 60-scenario report evaluation and is not used for model selection.
+Compare the two selected DQNs with all three baselines on five reproducible smoke-test scenarios, then plot the resulting CSVs:
 
 ```powershell
 python evaluate.py --checkpoint 3090=models/sensitivity/constrained_seed3090.pt --checkpoint 4090=models/sensitivity/constrained_seed4090.pt --episodes 5 --seed 93000 --constraint-aware --results-dir results/reproducibility_check
 python plot_results.py --results-dir results/reproducibility_check --memory-budget 8 --output-dir results/reproducibility_check/plots
 ```
 
-The selected checkpoints are loaded directly; these commands do not train or alter checkpoint weights. CSV and plot outputs in the chosen results directory are refreshed.
+For a full 60-scenario evaluation with the selected checkpoints, use `--episodes 60 --seed 91000` and a separate output directory. The seed block above is retained for reproducibility, but is previously examined rather than an untouched test set.
 
-## Reproduce training and evaluation
-
-The selected checkpoints were trained independently from fresh initialization on CPU for 250 episodes of at most 120 steps, seeds 3090 and 4090. DQN defaults: learning rate 0.001, gamma 0.97, batch 64, replay capacity 50,000, target update every 500 learner updates, epsilon 1.0 to 0.05 over 20,000 decisions. Run from the project root:
+Train a fresh constrained DQN on CPU with a chosen seed:
 
 ```powershell
-python train.py --episodes 250 --max-steps 120 --seed 3090 --constraint-aware --checkpoint models/reproduced_seed3090.pt --results-dir results/reproduced/train_seed3090
-python train.py --episodes 250 --max-steps 120 --seed 4090 --constraint-aware --checkpoint models/reproduced_seed4090.pt --results-dir results/reproduced/train_seed4090
-python evaluate.py --checkpoint 3090=models/reproduced_seed3090.pt --checkpoint 4090=models/reproduced_seed4090.pt --episodes 60 --seed 91000 --constraint-aware --results-dir results/reproduced/evaluation
-python plot_results.py --results-dir results/reproduced --memory-budget 8
+python train.py --episodes 250 --max-steps 120 --seed 3090 --constraint-aware --checkpoint models/new_seed3090.pt --results-dir results/new_run/train_seed3090
+python plot_results.py --results-dir results/new_run
 ```
 
-Evaluation compares each policy on the same per-episode environment seeds, distinct from the training episode seeds. DQN uses greedy masked actions. The episode CSV contains raw per-policy metrics; the summary contains means, standard deviations, and normal-approximation 95% confidence intervals. `useful_revisit_success_rate` is task-matching revisit events divided by all recorded revisit events. Memory-violation steps count post-transition steps over budget; constrained runs should report zero. Plots are generated from CSV outputs. Re-running with the same software versions and seeds is intended to reproduce results; PyTorch/device/library version differences can affect exact floating-point outcomes.
+Training configuration and episode metrics are saved alongside the checkpoint. The second command generates the training-return curve from `results/new_run/train_seed3090/training.csv`; it prints a note when evaluation CSVs are absent. For evaluation plots, point `plot_results.py` at the evaluation results directory as shown above.
 
-## Results and provenance
-
-Results are kept in separate directories so earlier runs remain auditable:
-
-- `results/v1/` and `models/v1/`: initial run; superseded after validity, accounting, and termination issues were corrected.
-- `results/corrected/`: corrected soft-budget experiment. Its DQN had a higher composite return than baselines but substantially more memory-violation steps; it is not the constraint-aware result.
-- `results/sensitivity/`: memory-penalty sweep, validation selection, and the saved constraint-aware held-out evaluation.
-- `results/final_optimization/`: later reward-weight validation experiment. Candidates did not show reliable two-seed improvement, so the selected checkpoints were retained.
-- `results/reproducibility_check/`: five-episode smoke evaluation on separate seeds 93000-93004, with plots; verification only, not used for model selection or report metrics.
-
-The selected constraint-aware evaluation used seeds 91000–91059. That block was examined in an earlier project analysis, so this is a **previously examined evaluation block**, not a newly untouched test. Results below are mean ± scenario SD over 60 episodes; higher return is better under the specified reward.
-
-| Policy | Return | Useful revisit | Restoration cost | Lost-work cost | Violation steps |
-|---|---:|---:|---:|---:|---:|
-| DQN seed 3090 | -21.70 ± 4.51 | 0.824 | 5.69 | 6.73 | 0 |
-| DQN seed 4090 | -16.31 ± 3.52 | 0.849 | 4.37 | 4.33 | 0 |
-| LRU | -58.38 ± 4.67 | 0.886 | 16.32 | 1.69 | 0 |
-| LFU | -58.43 ± 4.67 | 0.886 | 16.35 | 1.69 | 0 |
-| Random | -58.55 ± 4.62 | 0.887 | 16.34 | 1.70 | 0 |
-
-All policies had zero budget-violation steps under the constraint-aware transition rules. Useful-revisit success was 0.824 and 0.849 for the DQNs, versus 0.886, 0.886, and 0.887 for LRU, LFU, and Random. Thus, DQN had better composite return on this simulator block, while suspension baselines had higher useful revisit success. The environment enforces the memory invariant; these results do not show that DQN learned a hard memory guarantee.
-
-The validation reward-weight study did not justify replacing the selected models. For the disruption-weight candidate, paired return differences versus matching control seeds were +2.43 (95% scenario CI +0.26 to +4.59) and -1.47 (-3.43 to +0.49); average effect +0.48 over only two training seeds, with lower useful revisit success. This descriptive two-seed average is not evidence of a reliable general improvement. Raw tables, configurations, and plots are retained beside each experiment.
-
-Held-out comparison plots:
-
-![Held-out return with 95% confidence intervals](results/sensitivity/plots/heldout/return_comparison.png)
-
-![Mean active memory under the budget](results/sensitivity/plots/heldout/memory_comparison.png)
-
-## Report
-
-`report/report.tex` is the companion two-column LaTeX source; `report/report.pdf` is the generated report. The PDF builder reads the saved evaluation CSVs and embeds the corresponding plots, so numeric results are data-driven. Regenerate the PDF from the repository root with `python report/build_report.py`. ReportLab is listed in `requirements.txt`; no TeX installation is required for the PDF. The source can also be compiled independently with a LaTeX installation. The report has two content pages; references are on a separate page and excluded from the assignment page limit.
-
-## Layout
+## Project structure
 
 ```text
 TABasco/
-├── README.md
-├── requirements.txt
-├── demo.py
-├── environment.py          # simulated tab-management MDP
-├── agent.py                # masked PyTorch DQN and replay
-├── baselines.py            # LRU, LFU, random evaluation policies
-├── train.py                # reward-driven training and checkpoints
-├── evaluate.py             # common-seed metrics and CSVs
-├── plot_results.py         # CSV-based experiment plots
-├── plot_sensitivity.py     # validation/test sweep plots
-├── summarize_sensitivity.py
-├── tests/
-├── models/                 # selected and historical weights
-├── results/                # CSVs, plots, configs, experiment notes
-└── report/
-    ├── report.tex
-    ├── report.pdf
-    └── build_report.py
+├── agent.py                 # Masked PyTorch DQN and replay buffer
+├── baselines.py             # LRU, LFU, and random policies
+├── demo.py                  # Readable single-episode walkthrough
+├── environment.py           # Synthetic browser-session MDP
+├── evaluate.py              # Common-seed policy evaluation and CSVs
+├── plot_results.py          # Evaluation plots from CSV data
+├── plot_sensitivity.py      # Reward-sensitivity plots
+├── summarize_sensitivity.py # Reward-sensitivity summaries
+├── train.py                 # Reward-driven DQN training
+├── tests/                   # Environment and action-interface tests
+├── models/                  # Trained and historical checkpoints
+└── results/                 # Experiment CSVs, metadata, and figures
 ```
-
-## Project evolution
-
-1. The initial simulator and LRU/LFU/Random baselines established the MDP and comparison policies.
-2. The corrected version unified action validity and masking, reward accounting, and fixed-horizon termination after the first run showed invalid decisions and early-stop issues.
-3. Audits traced soft-budget violations to agent operations and automatic arrivals/revisits; increasing the memory coefficient reduced but did not eliminate violations.
-4. The constraint-aware transition variant made infeasible restoration/recovery explicit and declined over-budget arrivals, enforcing the simulated active-memory invariant.
-5. Reward-weight validation showed no consistent two-seed gain, so the selected constrained checkpoints were retained.
 
 ## Limitations
 
-The workload, revisit probabilities, task value, and memory units are synthetic. Only two independent training seeds support the selected DQN; the evaluation confidence intervals describe scenario variation conditional on those fixed trained policies, not training-seed uncertainty. The high-performing composite return depends on the chosen reward weights, and DQN useful-revisit success is lower than for the suspension baselines. Constraint-aware event deferral trades off continuity for capacity. Future work should add more training seeds, calibrated browser traces, user-valued recovery semantics, and a real-browser memory measurement study before any deployment claim.
-
-No changes are pushed to GitHub by the local reproduce commands.
+The workload, memory units, revisit probabilities, and task values are synthetic. Only two training seeds support the selected DQN comparison, and the evaluation intervals reflect scenario variation for those fixed models rather than training-seed uncertainty. Reward rankings depend on the chosen cost coefficients. The constraint-aware environment may defer or decline events to preserve its memory invariant. TABasco is not a browser extension, does not measure real browser memory, and should not be interpreted as a production tab manager.

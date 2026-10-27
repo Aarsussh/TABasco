@@ -36,7 +36,7 @@ MANIFEST
 pip-log.txt
 pip-delete-this-directory.txt
 
-# Unit test / coverage reports
+# Unit test / coverage outputs
 htmlcov/
 .tox/
 .nox/
@@ -218,17 +218,5 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
-# Local LaTeX and editor products
-*.aux
-*.bbl
-*.blg
-*.fdb_latexmk
-*.fls
-*.lof
-*.lot
-*.out
-*.synctex.gz
-*.toc
-*.xdv
 .DS_Store
 Thumbs.db
